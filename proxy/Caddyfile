@@ -1,0 +1,26 @@
+# Each app's route lives in routes/<app>.caddy and is imported below.
+# SITE_ADDRESS comes from .env (see .env.example); defaults to plain HTTP.
+
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	import routes/*.caddy
+
+	# Anything not claimed by an app: the landing page.
+	handle {
+		root * /srv/site
+		file_server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

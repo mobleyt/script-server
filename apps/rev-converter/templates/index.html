@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rev Transcript Reformatter</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="wrap"
+        data-convert-url="{{ url_for('convert') }}"
+        data-max-mb="{{ max_upload_mb }}">
+    <header>
+      <h1>Rev Transcript Reformatter</h1>
+      <p class="lede">Reformat speaker lines in Rev.com Word transcripts: the timestamp
+        moves to the front, the speaker name becomes uppercase, and continuation
+        timestamps get the current speaker&rsquo;s name. Timestamp links and all
+        other formatting are kept.</p>
+    </header>
+
+    <div class="example" aria-label="Example">
+      <div>
+        <span class="example-label">Before</span>
+        <code>Brandon Fish (00:00:02):</code>
+        <code>(00:00:35):</code>
+      </div>
+      <div>
+        <span class="example-label">After</span>
+        <code>00:00:02 BRANDON FISH</code>
+        <code>00:00:35 BRANDON FISH</code>
+      </div>
+    </div>
+
+    <label id="dropzone" class="dropzone" for="file-input">
+      <input id="file-input" type="file"
+             accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple>
+      <span class="dz-title">Drop Word (.docx) files here</span>
+      <span class="dz-sub">or <u>choose files</u> &middot; up to {{ max_upload_mb }} MB each</span>
+    </label>
+
+    <section id="queue" class="queue" hidden>
+      <div class="queue-head">
+        <h2 id="queue-title">Files</h2>
+        <div class="actions">
+          <button id="clear-btn" type="button" class="btn ghost">Clear</button>
+          <button id="zip-btn" type="button" class="btn" disabled>Download all (.zip)</button>
+          <button id="convert-btn" type="button" class="btn primary">Reformat</button>
+        </div>
+      </div>
+      <ul id="file-list" class="file-list"></ul>
+    </section>
+  </main>
+
+  <template id="row-template">
+    <li class="file-row" data-state="pending">
+      <div class="file-main">
+        <span class="file-name"></span>
+        <span class="file-status"></span>
+      </div>
+      <p class="file-notes" hidden></p>
+      <div class="file-actions">
+        <button type="button" class="btn small download-btn" hidden>Download .docx</button>
+        <button type="button" class="btn small ghost remove-btn" aria-label="Remove file">Remove</button>
+      </div>
+    </li>
+  </template>
+
+  <script src="{{ url_for('static', filename='zip.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

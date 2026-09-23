@@ -1,0 +1,15 @@
+# Rev Transcript Reformatter — apps/rev-converter
+# Public path /rev/ → container port 8000, prefix stripped and passed to the
+# app in X-Forwarded-Prefix so its links include it.
+
+redir /rev /rev/ 308
+
+handle_path /rev/* {
+	# Slightly above the app's own limit so the app returns its friendlier error.
+	request_body {
+		max_size 60MB
+	}
+	reverse_proxy rev-converter:8000 {
+		header_up X-Forwarded-Prefix /rev
+	}
+}

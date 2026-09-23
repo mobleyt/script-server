@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transcript Converter</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="wrap"
+        data-convert-url="{{ url_for('convert') }}"
+        data-max-mb="{{ max_upload_mb }}">
+    <header>
+      <h1>Transcript Converter</h1>
+      <p class="lede">Turn oral history transcript PDFs into clean, plain-text files.
+        Headers, footers, page numbers and the opening metadata block are removed,
+        and each speaker&rsquo;s turn is joined into a single paragraph.</p>
+    </header>
+
+    <label id="dropzone" class="dropzone" for="file-input">
+      <input id="file-input" type="file" accept="application/pdf,.pdf" multiple>
+      <span class="dz-title">Drop PDF files here</span>
+      <span class="dz-sub">or <u>choose files</u> &middot; up to {{ max_upload_mb }} MB each</span>
+    </label>
+
+    <fieldset class="options">
+      <legend>Options</legend>
+      <label><input type="checkbox" name="remove_front_matter" checked>
+        Remove front matter <span class="hint">(metadata block and abstract before the interview begins)</span></label>
+      <label><input type="checkbox" name="reflow" checked>
+        Join wrapped lines into paragraphs <span class="hint">(one paragraph per speaker turn)</span></label>
+      <label><input type="checkbox" name="strip_timestamps">
+        Remove timestamps <span class="hint">(e.g. 12:34 in the left margin)</span></label>
+    </fieldset>
+
+    <section id="queue" class="queue" hidden>
+      <div class="queue-head">
+        <h2 id="queue-title">Files</h2>
+        <div class="actions">
+          <button id="clear-btn" type="button" class="btn ghost">Clear</button>
+          <button id="zip-btn" type="button" class="btn" disabled>Download all (.zip)</button>
+          <button id="convert-btn" type="button" class="btn primary">Convert</button>
+        </div>
+      </div>
+      <ul id="file-list" class="file-list"></ul>
+    </section>
+  </main>
+
+  <template id="row-template">
+    <li class="file-row" data-state="pending">
+      <div class="file-main">
+        <span class="file-name"></span>
+        <span class="file-status"></span>
+      </div>
+      <p class="file-notes" hidden></p>
+      <div class="file-actions">
+        <button type="button" class="btn small preview-btn" hidden>Preview</button>
+        <button type="button" class="btn small download-btn" hidden>Download .txt</button>
+        <button type="button" class="btn small ghost remove-btn" aria-label="Remove file">Remove</button>
+      </div>
+      <pre class="preview" hidden></pre>
+    </li>
+  </template>
+
+  <script src="{{ url_for('static', filename='zip.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

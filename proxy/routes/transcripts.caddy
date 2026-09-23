@@ -1,0 +1,15 @@
+# Transcript Converter — apps/transcript-converter
+# Public path /transcripts/ → container port 8000, prefix stripped and passed
+# to the app in X-Forwarded-Prefix so its links include it.
+
+redir /transcripts /transcripts/ 308
+
+handle_path /transcripts/* {
+	# Slightly above the app's own limit so the app returns its friendlier error.
+	request_body {
+		max_size 60MB
+	}
+	reverse_proxy transcript-converter:8000 {
+		header_up X-Forwarded-Prefix /transcripts
+	}
+}

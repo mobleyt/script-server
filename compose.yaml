@@ -1,0 +1,74 @@
+# Script Server — reverse proxy + one service per app.
+#
+#   cp .env.example .env      # then edit
+#   docker compose up -d --build
+#
+# Only the proxy publishes ports. Apps sit on an internal network with no
+# outbound internet access and are reachable only through the proxy.
+
+name: script-server
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+# Hardening shared by every app container.
+x-app-defaults: &app-defaults
+  restart: unless-stopped
+  networks: [apps]
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  logging: *logging
+
+services:
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./proxy/routes:/etc/caddy/routes:ro
+      - ./proxy/site:/srv/site:ro
+      - caddy_data:/data        # TLS certificates — keep this volume
+      - caddy_config:/config
+    networks: [edge, apps]
+    logging: *logging
+
+  # ---- apps --------------------------------------------------------------
+  # Route: proxy/routes/transcripts.caddy  →  /transcripts/
+
+  transcript-converter:
+    <<: *app-defaults
+    build: ./apps/transcript-converter
+    image: script-server/transcript-converter:latest
+    environment:
+      MAX_UPLOAD_MB: ${TRANSCRIPTS_MAX_UPLOAD_MB:-50}
+      WEB_WORKERS: ${TRANSCRIPTS_WORKERS:-2}
+
+  # Route: proxy/routes/rev.caddy  →  /rev/
+
+  rev-converter:
+    <<: *app-defaults
+    build: ./apps/rev-converter
+    image: script-server/rev-converter:latest
+    environment:
+      MAX_UPLOAD_MB: ${REV_MAX_UPLOAD_MB:-50}
+      WEB_WORKERS: ${REV_WORKERS:-2}
+
+networks:
+  edge: {}
+  apps:
+    internal: true
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

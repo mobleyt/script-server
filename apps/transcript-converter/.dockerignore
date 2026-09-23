@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+*.pdf
+*.txt
+!requirements.txt
+.DS_Store
+README.md
