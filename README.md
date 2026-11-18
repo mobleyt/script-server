@@ -6,6 +6,7 @@ A collection of small, single-purpose web tools for staff. Each tool lives in it
 |---|---|---|
 | [`apps/transcript-converter`](apps/transcript-converter) | `/transcripts/` | Python / Flask |
 | [`apps/rev-converter`](apps/rev-converter) | `/rev/` | Python / Flask |
+| [`apps/aviary-uploader`](apps/aviary-uploader) | `/aviary/` (password protected) | Python / Flask |
 
 ## Conventions for every app
 
@@ -34,11 +35,14 @@ apps/<name>/          each app: Dockerfile, code, README
 ```
 browser ──► Caddy :80/:443 ─┬─ /              landing page
                             ├─ /transcripts/* ──► transcript-converter:8000
-                            └─ /rev/*         ──► rev-converter:8000
+                            ├─ /rev/*         ──► rev-converter:8000
+                            └─ /aviary/*      ──► aviary-uploader:8000 ──► Aviary API
                                   (prefix stripped, sent as X-Forwarded-Prefix)
 ```
 
 Only the proxy publishes ports. The apps run on an `internal` Docker network with no outbound internet access, so they can be reached only through the proxy. App containers also run read-only, as non-root, with all Linux capabilities dropped. If one app crashes, the landing page and the other apps keep working; the broken app returns 502 until it recovers.
+
+**Exceptions for the Aviary Uploader.** It calls the Aviary API, so it also joins an `egress` network that has outbound internet access. Only apps that need outbound access should join it. It also creates records in Aviary, so its route (`proxy/routes/aviary.caddy`) requires a username and password. Set `AVIARY_AUTH_USER` and `AVIARY_AUTH_HASH` in `.env` (see `.env.example`), then run `docker compose up -d proxy` so the proxy picks up the new values. Until they're set, `/aviary/` can't be opened. The other tools stay open.
 
 ## Deployment
 

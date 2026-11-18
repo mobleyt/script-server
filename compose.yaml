@@ -4,7 +4,8 @@
 #   docker compose up -d --build
 #
 # Only the proxy publishes ports. Apps sit on an internal network with no
-# outbound internet access and are reachable only through the proxy.
+# outbound internet access and are reachable only through the proxy. The one
+# exception is aviary-uploader, which also joins the egress network.
 
 name: script-server
 
@@ -34,6 +35,10 @@ services:
       - "${HTTPS_PORT:-443}:443/udp"
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      # Login for /aviary/ (proxy/routes/aviary.caddy). The default hash is of a
+      # random, discarded password, so the route stays locked until .env sets it.
+      AVIARY_AUTH_USER: ${AVIARY_AUTH_USER:-aviary}
+      AVIARY_AUTH_HASH: ${AVIARY_AUTH_HASH:-$$2a$$12$$dYFta9c4C1w/vYXUeV/zOeGrO2luQe6P/TRU24dakQSDDZ3ym1Inm}
     volumes:
       - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./proxy/routes:/etc/caddy/routes:ro
@@ -64,10 +69,31 @@ services:
       MAX_UPLOAD_MB: ${REV_MAX_UPLOAD_MB:-50}
       WEB_WORKERS: ${REV_WORKERS:-2}
 
+  # Route: proxy/routes/aviary.caddy  →  /aviary/  (password protected)
+  # The one app with outbound internet access (the egress network), because it
+  # calls the Aviary API.
+
+  aviary-uploader:
+    <<: *app-defaults
+    build: ./apps/aviary-uploader
+    image: script-server/aviary-uploader:latest
+    networks: [apps, egress]
+    environment:
+      AVIARY_API_KEY: ${AVIARY_API_KEY:-}
+      AVIARY_ORG_ID: ${AVIARY_ORG_ID:-}
+      AVIARY_BASE_URL: ${AVIARY_BASE_URL:-https://www.aviaryplatform.com}
+      AVIARY_DEFAULT_ACCESS: ${AVIARY_DEFAULT_ACCESS:-private}
+      MULTI_VALUE_DELIMITER: ${AVIARY_MULTI_VALUE_DELIMITER:-|}
+      MAX_UPLOAD_MB: ${AVIARY_MAX_UPLOAD_MB:-10}
+      MAX_ROWS: ${AVIARY_MAX_ROWS:-500}
+      WEB_WORKERS: ${AVIARY_WORKERS:-2}
+
 networks:
   edge: {}
   apps:
     internal: true
+  # Outbound internet, for apps that must call external APIs.
+  egress: {}
 
 volumes:
   caddy_data: {}

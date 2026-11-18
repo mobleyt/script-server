@@ -1,0 +1,23 @@
+# Aviary Uploader — apps/aviary-uploader
+# Public path /aviary/ → container port 8000, prefix stripped and passed to the
+# app in X-Forwarded-Prefix so its links include it.
+#
+# This tool writes to Aviary, so it sits behind a username and password set in
+# .env (AVIARY_AUTH_USER / AVIARY_AUTH_HASH; see .env.example). Until they are
+# set, compose supplies a hash of a random, discarded password, which keeps the
+# route locked.
+
+redir /aviary /aviary/ 308
+
+handle_path /aviary/* {
+	basic_auth {
+		{$AVIARY_AUTH_USER} {$AVIARY_AUTH_HASH}
+	}
+	# Slightly above the app's own limit so the app returns its friendlier error.
+	request_body {
+		max_size 12MB
+	}
+	reverse_proxy aviary-uploader:8000 {
+		header_up X-Forwarded-Prefix /aviary
+	}
+}

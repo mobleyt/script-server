@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aviary Uploader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="wrap"
+        data-collections-url="{{ url_for('collections') }}"
+        data-parse-url="{{ url_for('parse') }}"
+        data-create-url="{{ url_for('create_resource') }}"
+        data-max-mb="{{ max_upload_mb }}"
+        data-configured="{{ 'true' if configured else 'false' }}">
+    <header>
+      <h1>Aviary Uploader</h1>
+      <p class="lede">Create Aviary resources in bulk from a spreadsheet. Each row becomes
+        one resource in the collection you choose, and each media URL in the row is
+        attached to it. Aviary downloads the media files itself.</p>
+    </header>
+
+    {% if not configured %}
+    <p class="banner" role="alert">This tool isn&rsquo;t set up yet: the Aviary API key or
+      organization ID is missing on the server.</p>
+    {% endif %}
+
+    <section class="step">
+      <h2><span class="step-num">1</span> Choose a collection</h2>
+      <div class="field-row">
+        <select id="collection" aria-label="Aviary collection" disabled>
+          <option value="">Loading collections…</option>
+        </select>
+        <button id="reload-btn" type="button" class="btn ghost small">Reload</button>
+      </div>
+      <p id="collection-msg" class="hint" hidden></p>
+    </section>
+
+    <section class="step">
+      <h2><span class="step-num">2</span> Add your spreadsheet</h2>
+      <label id="dropzone" class="dropzone" for="file-input">
+        <input id="file-input" type="file"
+               accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <span class="dz-title">Drop a .csv or .xlsx file here</span>
+        <span class="dz-sub">or <u>choose a file</u> &middot; up to {{ max_rows }} rows,
+          {{ max_upload_mb }} MB</span>
+      </label>
+      <details class="help">
+        <summary>Spreadsheet format &middot; <a href="{{ url_for('template') }}">download a template</a></summary>
+        <ul>
+          <li>The first row holds the column headers. <strong>Title</strong> is required.</li>
+          <li><strong>Access</strong>: public, private, restricted or internal. If it&rsquo;s
+            blank, {{ default_access }} is used.</li>
+          <li><strong>Custom Unique Identifier</strong> is optional. Rows whose identifier
+            already exists in Aviary are skipped, so you can safely re-run a file.</li>
+          <li><strong>Featured</strong> is optional: yes or no.</li>
+          <li><strong>Media URL</strong>: a link Aviary can download. Add more with
+            <code>Media URL 2</code>, <code>Media URL 3</code>&hellip; or put several in one cell.</li>
+          <li>Every other column is an Aviary metadata field, named exactly as in Aviary,
+            e.g. <code>Description</code>. To set a vocabulary term, add it in parentheses:
+            <code>Agent (Creator)</code>.</li>
+          <li>Separate several values in one cell with <code>{{ delimiter }}</code>, e.g.
+            <code>Smith, Jane {{ delimiter }} Doe, John</code>. Repeating a column also works.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="queue" class="queue" hidden>
+      <div class="queue-head">
+        <h2 id="queue-title">Rows</h2>
+        <div class="actions">
+          <button id="clear-btn" type="button" class="btn ghost">Clear</button>
+          <button id="results-btn" type="button" class="btn" disabled>Download results (.csv)</button>
+          <button id="stop-btn" type="button" class="btn" hidden>Stop</button>
+          <button id="upload-btn" type="button" class="btn primary" disabled>Upload</button>
+        </div>
+      </div>
+      <p id="queue-msg" class="hint"></p>
+      <ul id="row-list" class="file-list"></ul>
+    </section>
+  </main>
+
+  <template id="row-template">
+    <li class="file-row" data-state="pending">
+      <div class="file-main">
+        <span class="file-name"></span>
+        <span class="file-status"></span>
+      </div>
+      <p class="row-meta"></p>
+      <p class="file-notes" hidden></p>
+    </li>
+  </template>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
