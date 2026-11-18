@@ -4,9 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Aviary Uploader</title>
+  <link rel="stylesheet" href="/_shared/nav.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+  <script src="/_shared/nav.js"></script>
   <main class="wrap"
         data-collections-url="{{ url_for('collections') }}"
         data-parse-url="{{ url_for('parse') }}"

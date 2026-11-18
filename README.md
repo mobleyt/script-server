@@ -29,6 +29,7 @@ proxy/
   Caddyfile           site address, security headers, landing page
   routes/*.caddy      one route file per app, imported automatically
   site/index.html     landing page at /, links to every tool
+  site/_shared/       site header and tool menu (nav.js, nav.css), included by every page
 apps/<name>/          each app: Dockerfile, code, README
 ```
 
@@ -118,6 +119,6 @@ Say it's a PHP tool to be served at `/reports/`:
    }
    ```
 
-4. **Add a card to `proxy/site/index.html`** and a row to the app table at the top of this README.
+4. **Add the app to the site header and landing page.** Add an entry to `TOOLS` in `proxy/site/_shared/nav.js`, a card to `proxy/site/index.html`, and a row to the app table at the top of this README. Put the shared header in the app's HTML: in `<head>` add `<link rel="stylesheet" href="/_shared/nav.css">`, and as the first thing in `<body>` add `<script src="/_shared/nav.js"></script>`. These root-relative paths are served by the proxy, not by the app. When the app runs on its own, without the proxy, they 404 and the page just has no header.
 
 5. **Deploy:** `docker compose up -d --build`, then `docker compose restart proxy`.
